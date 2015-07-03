@@ -1,0 +1,1 @@
+add_library(ConMsg STATIC ConMsg/ConMsg)

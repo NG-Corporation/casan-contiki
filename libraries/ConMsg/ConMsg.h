@@ -112,45 +112,47 @@
 	} ConBuf ;
 
 
-	ConStat stat_ ;
+	typedef struct ConMsg {
+		ConStat stat_ ;
 
-	channel_t chan_ ;
-	panid_t panid_ ;
-	addr2_t addr2_ ;
-	addr8_t addr8_ ;
+		channel_t chan_ ;
+		panid_t panid_ ;
+		addr2_t addr2_ ;
+		addr8_t addr8_ ;
 
-	ConBuf *rbuffer_ ;		// with msgbufsize_ entries
-	volatile int rbuffirst_ ;
-	volatile int rbuflast_ ;
-	int msgbufsize_ ;
-	ConReceivedFrame rframe_ ;	// decoded received frame
+		ConBuf *rbuffer_ ;		// with msgbufsize_ entries
+		volatile int rbuffirst_ ;
+		volatile int rbuflast_ ;
+		int msgbufsize_ ;
+		ConReceivedFrame rframe_ ;	// decoded received frame
 
-		/*
-	 * Transmission
-	 */
+			/*
+		 * Transmission
+		 */
 
-	uint8_t seqnum_ ;		// to be placed in MAC header
-	volatile bool writing_ ;
+		uint8_t seqnum_ ;		// to be placed in MAC header
+		volatile bool writing_ ;
+	}ConMsg;
 
 
-	ConStat *getstat (void) ; 
+	ConStat *getstat () ; 
 
-	void init(void);
+	void init();
 
 	/** Accessor method to get the size (in number of frames) of the receive buffer */
-	int getMsgbufsize (void) ; 
+	int getMsgbufsize () ; 
 
 	/** Accessor method to get the channel id (11 ... 26) */
-	channel_t getChannel (void) ;
+	channel_t getChannel () ;
 
 	/** Accessor method to get our 802.15.4 hardware address (16 bits) */
-	addr2_t getAddr2 (void)  ; 
+	addr2_t getAddr2 ()  ; 
 
 	/** Accessor method to get our 802.15.4 hardware address (64 bits) */
-	addr8_t getAddr8 (void) ; 
+	addr8_t getAddr8 () ; 
 
 	/** Accessor method to get our 802.15.4 PAN id */
-	panid_t getPanid (void); 
+	panid_t getPanid (); 
 
 	/** Accessor method to get the TX power (-17 ... +3 dBM) */
 	//txpwr_t txpower (void) { return txpower_ ; }	// -17 .. +3 dBm
@@ -159,19 +161,19 @@
 	//bool promiscuous (void) { return promisc_ ; }
 
 	/** Mutator method to set the size (in number of frames) of the receive buffer */
-	void setMsgbufsize (int msgbufsize) ; 
+	void setMsgbufsize ( int msgbufsize) ; 
 
 	/** Mutator method to set the channel id (11 ... 26) */
-	void setChannel (channel_t chan) ;	// 11..26
+	void setChannel ( channel_t chan) ;	// 11..26
 
 	/** Mutator method to set our 802.15.4 hardware address (16 bits) */
-	void setAddr2 (addr2_t addr) ; 
+	void setAddr2 ( addr2_t addr) ; 
 
 	/** Mutator method to set our 802.15.4 hardware address (16 bits) */
-	void setAddr8 (addr8_t addr)  ; 
+	void setAddr8 ( addr8_t addr)  ; 
 
 	/** Mutator method to set our 802.15.4 PAN id */
-	void setPanid (panid_t panid)  ; 
+	void setPanid ( panid_t panid)  ; 
 
 	/** Mutator method to set the TX power (-17 ... +3 dBM) */
 	//void txpower (txpwr_t txpower) { txpower_ = txpower ; }
@@ -181,22 +183,20 @@
 
 	// Start radio processing
 
-	void start (void) ;
+	void start () ;
 
 
 		// Not really public: interrupt functions are designed to
 	// be called outside of an interrupt
-	uint8_t *usr_radio_receive_frame (uint8_t len, uint8_t *frm) ;
-	void usr_radio_tx_done (void) ;
+	uint8_t *it_receive_frame ( uint8_t len, uint8_t *frm) ;
+	void it_tx_done () ;
 
 	// Send and receive frames
 
-	bool sendto (addr2_t a,  const uint8_t payload [], uint8_t len) ;
-	ConReceivedFrame *get_received (void) ;	// get current frame (or NULL)
-	void skip_received (void) ;	// skip to next read frame
+	bool sendto ( addr2_t a,  const uint8_t payload [], uint8_t len) ;
+	ConReceivedFrame *get_received () ;	// get current frame (or NULL)
+	void skip_received () ;	// skip to next read frame
 
-	
-	uint16_t addr_trad (const char *a);
 	/**
 	 * Return operational statistics
 	 *
@@ -204,5 +204,6 @@
 	 * modified by an interrupt routine.
 	 */
 	
+	extern ConMsg *conmsg;
 
 #endif

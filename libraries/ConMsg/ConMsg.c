@@ -12,34 +12,43 @@
 #define I154_ADDRLEN 2
 
 
-ConStat *getstat (void) { return &stat_ ; }
+ConMsg *conmsg ;
 
-int getMsgbufsize (void) { return msgbufsize_ ; }
 
-addr2_t getAddr2 (void) { return addr2_ ; }
+ConStat *getstat () { return &conmsg->stat_ ; }
 
-addr8_t getAddr8 (void) { return addr8_ ; }
+int getMsgbufsize () { return conmsg->msgbufsize_ ; }
 
-panid_t getPanid (void) { return panid_ ; }
+addr2_t getAddr2 () { return conmsg->addr2_ ; }
 
-channel_t getChannel (void) { return chan_ ; }
+addr8_t getAddr8 () { return conmsg->addr8_ ; }
 
-void setMsgbufsize (int msgbufsize) { msgbufsize_ = msgbufsize ; }
+panid_t getPanid () { return conmsg->panid_ ; }
 
-void setAddr2 (addr2_t addr) { addr2_ = addr ; }
+channel_t getChannel () { return conmsg->chan_ ; }
 
-void setAddr8 (addr8_t addr) { addr8_ = addr ; }
+void setMsgbufsize ( int msgbufsize) { conmsg->msgbufsize_ = msgbufsize ; }
 
-void setPanid (panid_t panid) { panid_ = panid ; }
+void setAddr2 ( addr2_t addr) { conmsg->addr2_ = addr ; }
 
-void setChannel (channel_t chan) { chan_ = chan ; }
+void setAddr8 ( addr8_t addr) { conmsg->addr8_ = addr ; }
 
-uint8_t *usr_radio_receive_frame (uint8_t len, uint8_t *frm)
+void setPanid ( panid_t panid) { conmsg->panid_ = panid ; }
+
+void setChannel ( channel_t chan) {  conmsg->chan_ = chan ; }
+
+
+uint8_t *usr_radio_receive_frame (uint8_t len, uint8_t *frm) {
+	return it_receive_frame( len, frm);
+}
+
+uint8_t *it_receive_frame ( uint8_t len, uint8_t *frm)
 {
-	
-	int newlast = (rbuflast_ + 1) % msgbufsize_ ;
-	if (newlast == rbuffirst_)
-	    stat_.rx_overrun++ ;
+	//printf ("reçu\n");
+	int newlast = (conmsg->rbuflast_ + 1) % conmsg->msgbufsize_ ;
+
+	if (newlast == conmsg->rbuffirst_)
+	    conmsg->stat_.rx_overrun++ ;
 	else
 	{
 	    /*
@@ -47,62 +56,72 @@ uint8_t *usr_radio_receive_frame (uint8_t len, uint8_t *frm)
 	     * - update the message with length and lqi
 	     * - update the frame buffer pointer
 	     */
+	    conmsg->rbuffer_ [conmsg->rbuflast_].len = len ;
 
-	    rbuffer_ [rbuflast_].len = len ;
+	    conmsg->rbuflast_ = newlast ;
 
-	    rbuflast_ = newlast ;
-	    frm = (uint8_t *) rbuffer_ [newlast].frame ;
+	    frm = (uint8_t *) conmsg->rbuffer_ [newlast].frame ;
 	}
+	//printf("%d   :   %d\n", conmsg->rbuffirst_, conmsg->rbuflast_);
     return frm;
 }
 
 
+/*
+ * Called by interrupt routine (see radio_rfa.c) when a transmission
+ * is done. Update statistics.
+ */
 
 void usr_radio_tx_done ()
 {
+	it_tx_done();
+}
+
+
+void it_tx_done ()
+{
 	
-    writing_ = false ;
+    conmsg->writing_ = false ;
 }
 
 
 
-void init(void) {
-	chan_ = 17;
-	writing_ = false;
+void init() {
+	conmsg->chan_ = 17;
+	conmsg->writing_ = false;
 }
 
 
-void start(void) {
+void start() {
+	
+	if (conmsg->msgbufsize_ == 0)		// prevent stupid errors...
+		conmsg->msgbufsize_ = DEFAULT_MSGBUF_SIZE ;
 
-	if (msgbufsize_ == 0)		// prevent stupid errors...
-	msgbufsize_ = DEFAULT_MSGBUF_SIZE ;
+	if (conmsg->rbuffer_ != NULL) {
+		conmsg->rbuffer_ =NULL ;	
+	}
+	
+    conmsg->rbuffer_ = (ConBuf *)malloc(sizeof(struct ConBuf)*conmsg->msgbufsize_) ;
 
-	if (rbuffer_ != NULL)
-		free(rbuffer_) ;
-    rbuffer_ = (ConBuf *)malloc(sizeof(struct ConBuf)*msgbufsize_) ;
-    rbuffirst_ = 0 ;
-    rbuflast_ = 0 ;
-
-
-    //stat_ = (ConStat)malloc(sizeof(conStat));
-
-    writing_ = false;
-    seqnum_ = 0;
+    conmsg->rbuffirst_ = 0 ;
+    conmsg->rbuflast_ = 0 ;
+    
+    conmsg->writing_ = false;
+    conmsg->seqnum_ = 0;
 
     NETSTACK_RADIO.init();
-    initBuf((uint8_t *) rbuffer_ [rbuflast_].frame, MAX_PAYLOAD);
+    initBuf((uint8_t *) conmsg->rbuffer_ [conmsg->rbuflast_].frame, MAX_PAYLOAD);
     NETSTACK_RADIO.on();
 
 }
 
 
 
-bool sendto ( addr2_t a,  const uint8_t payload[], uint8_t len ) {
+bool sendto (  addr2_t a,  const uint8_t payload[], uint8_t len ) {
 	uint8_t frame[MAX_PAYLOAD];
 	uint16_t fcf ;
 	int frmlen ;
-
-	frmlen = 9 + len + 2;
+	frmlen = 9 + len ;
 	if(frmlen > MAX_PAYLOAD)
 		return false;
 
@@ -119,44 +138,52 @@ bool sendto ( addr2_t a,  const uint8_t payload[], uint8_t len ) {
 	    | Z_SET_SRC_ADDR_MODE (Z_ADDRMODE_ADDR2)
 	    ;
 
-	//Exemple
-	    Z_SET_INT16 (&frame [0], fcf) ;		// fcf
-    frame [2] = ++seqnum_ ; ;			// seq
-    Z_SET_INT16 (&frame [3], panid_) ;		// dst panid
+	Z_SET_INT16 (&frame [0], fcf) ;		// fcf
+    frame [2] = ++conmsg->seqnum_ ; ;			// seq
+    Z_SET_INT16 (&frame [3], conmsg->panid_) ;		// dst panid
     Z_SET_INT16 (&frame [5], a) ;		// dst addr
-    Z_SET_INT16 (&frame [7], addr2_) ;		// src addr
+    Z_SET_INT16 (&frame [7], conmsg->addr2_) ;		// src addr
 
     memcpy (frame + 9, payload, len) ;
-    writing_ = true ;
+
+    // int i;
+    // for (i = 0; i < frmlen; ++i)
+    // {
+    // 	printf("%d",frame[i] );
+    // }
+    // printf("\n");
+    //printf("envoyé\n" );
+    conmsg->writing_ = true ;
     NETSTACK_RADIO.send (frame, frmlen) ;
 
-    while (writing_);
-
+    while (conmsg->writing_);
 	return true;
 }
 
 
-ConReceivedFrame *get_received (void) {
+ConReceivedFrame *get_received () {
 	ConReceivedFrame *r ;
     ConBuf *b ;
 
     platform_enter_critical();
-    if (rbuffirst_ == rbuflast_) {
+    if (conmsg->rbuffirst_ == conmsg->rbuflast_) {
 		b = NULL ;
 	}
-    else b = & rbuffer_ [rbuffirst_] ;
+    else  b = &conmsg->rbuffer_ [conmsg->rbuffirst_] ;
     platform_exit_critical();
-
-    if (b == NULL)
+    if (b == NULL){
 		r = NULL ;
+	}
     else
     {
+
     	uint8_t *p = (uint8_t *) b->frame ;
 		int intrapan ;
 
-		r = & rframe_ ;
+		r = & conmsg->rframe_ ;
 		r->rawframe = (uint8_t *) b->frame ;
 		r->rawlen = b->len ;
+		r->lqi = b->lqi;
 
 		/* decode Frame Control Field */
 		r->fcf = Z_GET_INT16 (p) ;
@@ -208,9 +235,9 @@ ConReceivedFrame *get_received (void) {
 			p += 8 ;
 			break ;
 		}
-
 		r->payload = p ;
-		r->paylen = r->rawlen - (p - r->rawframe) - 2 ;	// skip FCS
+		r->paylen = r->rawlen - (p - r->rawframe)  ;	// skip FCS
+
     }
     return r ;
 
@@ -218,11 +245,12 @@ ConReceivedFrame *get_received (void) {
 
 
 
-void skip_received (void)
+void skip_received ()
 {
+
     platform_enter_critical();
-    if (rbuffirst_ != rbuflast_)
-	rbuffirst_ = (rbuffirst_ + 1) % msgbufsize_ ;
+    if (conmsg->rbuffirst_ != conmsg->rbuflast_)
+		conmsg->rbuffirst_ = (conmsg->rbuffirst_ + 1) % conmsg->msgbufsize_ ;
     platform_exit_critical();
 }
 

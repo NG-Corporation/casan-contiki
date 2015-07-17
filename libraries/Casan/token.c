@@ -35,6 +35,7 @@ token *initToken(void)
 
 token *initTokenChar(char *str) {
  	token *to = (token *) malloc (sizeof (struct Token));
+    to->toklen_ = 0 ;
  	int i =0;
 
  	while (str [i] != 0 && i < NTAB (to->token_))

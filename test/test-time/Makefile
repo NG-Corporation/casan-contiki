@@ -1,11 +1,10 @@
 CONTIKI = ../../../../..
-#PROJECT_SOURCEFILES += radio-rf2xx.c
+CASAN = ../..
+PROJECT_SOURCEFILES += $(CASAN)/libraries/Casan/time.c
 TARGET = iotlab-m3
-#PLATFORM_TYPE = IOTLAB_M3
-
-all: token retrans
 
 
+all:	test-time
 
 include $(CONTIKI)/Makefile.include
 

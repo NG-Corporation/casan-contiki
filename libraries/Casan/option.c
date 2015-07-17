@@ -25,7 +25,7 @@ static uint8_t errno_ = 0 ;
                 op->optval_ = 0 ;           \
                 b = op->staticval_ ;        \
                 }                   \
-                memcpy (b, (p), op->optlen_) ;      \
+                memcpy (b, p, op->optlen_) ;      \
                 b [op->optlen_] = 0 ;           \
             } while (false)             // no " ;"
 #define CHK_OPTCODE(c,err) do {                 \
@@ -80,9 +80,9 @@ static optdesc optdesc_ [] =
  * Utilities
  */
 
-static byte *uint_to_byte (uint val, int *len) {
+byte *uint_to_byte (uint val, int *len) {
 
-    static byte stbin [sizeof (uint)] ;
+    byte stbin [sizeof (uint)] ;
     int shft ;
 
     // translate in network byte order, without leading null bytes
@@ -115,6 +115,7 @@ void freeOption( option *op) {
 option *initOption ()
 {
     option *op = (option *)malloc (sizeof(struct option));
+    op->optlen_ = 0;
     RESET(op) ;
     return op;
 }
@@ -130,6 +131,7 @@ option *initOption ()
 
 option *initOptionEmpty (optcode_t optcode) {
     option *op = (option *) malloc (sizeof(struct option));
+    op->optlen_ = 0;
     bool err = false ;
     CHK_OPTCODE (optcode, err) ;
     if (err) {
@@ -154,6 +156,7 @@ option *initOptionEmpty (optcode_t optcode) {
  */
 
  option *initOptionOpaque(optcode_t optcode, const void *optval, int optlen) {
+    
     option *op = (option *)malloc (sizeof(struct option));
     bool err = false ;
     CHK_OPTCODE (optcode, err) ;
@@ -169,7 +172,7 @@ option *initOptionEmpty (optcode_t optcode) {
     RESET(op) ;
     op->optcode_ = optcode ;
     op->optlen_ = optlen ;
-    COPY_VAL(op, optval);
+    COPY_VAL(op, optval);   
     return op;
  }
 
@@ -221,10 +224,14 @@ option *initOptionInteger (optcode_t optcode, uint optval)
 
 option *initOptionOption (const option *o)
 {
-    option *op= NULL;
-    memcpy (op, &o, sizeof o) ;
-    if (op->optval_)
-        COPY_VAL (op,o->optval_) ;
+
+    option *op =initOption();
+    memcpy (op, o, sizeof *o) ; 
+    
+    if (op->optval_) {
+        COPY_VAL (op, o->optval_) ;
+    }
+    
     return op;
 }
 
@@ -443,10 +450,8 @@ void printOption (const option *o)
         printf("%d", (unsigned char) o->optcode_) ;
         break ;
     }
-    printf ("/") ;
-    printf (o->optcode_) ;
-    printf ("%s=",BLUE (" optlen")) ;
-    printf (o->optlen_) ;
+    printf ("/%d", o->optcode_) ;
+    printf ("%s=%d",BLUE (" optlen"), o->optlen_) ;
 
     if (o->optval_)
     {

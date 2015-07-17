@@ -4,6 +4,7 @@
 l2addr_154 *l2addr_154_broadcast;
 addr2_t addr2_broadcast = CONST16 (0xff, 0xff) ;
 
+
 /*
  * We assume a fixed size MAC header which includes:
  * 2 bytes : FCF (with the intra-PAN bit set)
@@ -23,7 +24,7 @@ addr2_t addr2_broadcast = CONST16 (0xff, 0xff) ;
 
 
 
-void freel2_154(l2addr_154 *addr) {
+void freel2addr_154(l2addr_154 *addr) {
 	free(addr);
 }
 
@@ -73,7 +74,7 @@ l2addr_154 *init_l2addr_154_char(const char *a)
 
 void setBroasdcastAddr(void) {
 	l2addr_154_broadcast = (l2addr_154 *)malloc(sizeof(struct l2addr_154));
-	l2addr_154_broadcast = init_l2addr_154_char("ff:ff");
+	l2addr_154_broadcast = init_l2addr_154_char("ff:ff");	
 }
 
 
@@ -102,29 +103,67 @@ void printAddr (const l2addr_154 *x)  {
 	printf("%x",BYTE_HIGH(x->addr_) );
 }
 
-void startL2_154 (l2addr_154 *a, channel_t chan, panid_t panid) {
-	myaddr_ =  a->addr_ ;
-    setAddr2 (myaddr_) ;
-    setChannel (chan) ;
-    setPanid (panid) ;
 
+void printAddr_2 (const addr2_t x)  {
+	printf("%x",BYTE_LOW(x));
+	printf(" : " );
+	printf("%x",BYTE_HIGH(x) );
+}
+
+
+
+
+/******************************************************************************
+ * l2net_154 methods
+ */
+
+// void startL2_154 (l2net_154 *l2, l2addr_154 *a, channel_t chan, panid_t panid) {
+	
+// 	l2->myaddr_ = a ->addr_;
+// 	conmsg = (ConMsg * ) malloc (sizeof(ConMsg));
+//     setAddr2 ( l2->myaddr_) ;
+//     setChannel ( chan) ;
+//     setPanid ( panid) ;
+//     setMsgbufsize(10);
+//     setBroasdcastAddr();
+//     l2->mtu_ = I154_MTU ;
+
+//     l2->curframe_ = NULL;   // no currently received frame
+
+//     start () ;
+
+// }
+
+
+l2net_154* startL2_154 ( l2addr_154 *a, channel_t chan, panid_t panid) {
+	l2net_154 *l2 = (l2net_154 *) malloc (sizeof(l2net_154));
+	l2->myaddr_ = a ->addr_;
+
+	conmsg = (ConMsg * ) malloc (sizeof(ConMsg));
+    setAddr2 ( l2->myaddr_) ;
+    setChannel ( chan) ;
+    setPanid ( panid) ;
+    setMsgbufsize(10);
     setBroasdcastAddr();
-    mtu_ = I154_MTU ;
+    l2->mtu_ = I154_MTU ;
 
-    curframe_ = NULL ;			// no currently received frame
+    l2->curframe_ = NULL;   // no currently received frame
 
     start () ;
+    return l2;
+
 }
 
-size_t maxpayload (void) {
-	return mtu_ - (I154_SIZE_HEADER + I154_SIZE_FCS) ;
+size_t maxpayload (l2net_154 *l2) {
+	return l2->mtu_ - (I154_SIZE_HEADER + I154_SIZE_FCS) ;
 }
 
 
-bool send (l2addr_154 *dest, const uint8_t *data, size_t len) {
+bool send (l2net_154 *l2, l2addr_154 *dest, const uint8_t *data, size_t len) {
 	bool success = false;
-	if (len <= mtu_ - (I154_SIZE_HEADER + I154_SIZE_FCS))
-		success = sendto (( dest)->addr_, data, len) ;
+
+	if (len <= l2->mtu_ - (I154_SIZE_HEADER + I154_SIZE_FCS))
+		success = sendto ( ( dest)->addr_, data, len) ;
 	return success;
 }
 
@@ -132,7 +171,7 @@ bool send (l2addr_154 *dest, const uint8_t *data, size_t len) {
 
 /**
  * @brief Receive a packet from the IEEE 802.15.4 network
- *
+ *	
  * This method queries the ZigMsg library in order. The received
  * packet is kept by the ZigMsg library in a private buffer.
  * Minimal decoding is done here in order to decide if it is
@@ -142,25 +181,27 @@ bool send (l2addr_154 *dest, const uint8_t *data, size_t len) {
  * See the `l2net::l2_recv_t` enumeration for return values.
  */
 
-l2_recv_t recv (void) 
+l2_recv_t recv (l2net_154 *l2) 
 {
     l2_recv_t r ;
-    if (curframe_ != NULL)
+    if (l2->curframe_ != NULL) {
     	skip_received();
+    }
 
-    curframe_ = get_received();
-    if (curframe_ != NULL
-	    && curframe_->frametype == Z_FT_DATA
-	    && Z_GET_DST_ADDR_MODE (curframe_->fcf) == Z_ADDRMODE_ADDR2
-	    && Z_GET_SRC_ADDR_MODE (curframe_->fcf) == Z_ADDRMODE_ADDR2
-	    && Z_GET_INTRA_PAN (curframe_->fcf)
+    l2->curframe_ = get_received();
+    if (l2->curframe_ != NULL
+	    && l2->curframe_->frametype == Z_FT_DATA
+	    && Z_GET_DST_ADDR_MODE (l2->curframe_->fcf) == Z_ADDRMODE_ADDR2
+	    && Z_GET_SRC_ADDR_MODE (l2->curframe_->fcf) == Z_ADDRMODE_ADDR2
+	    && Z_GET_INTRA_PAN (l2->curframe_->fcf)
 	    )
     {
-
-    	if (curframe_->dstaddr != myaddr_ && curframe_->dstaddr != addr2_broadcast)
+    		
+    	if (l2->curframe_->dstaddr != l2->myaddr_ && l2->curframe_->dstaddr != addr2_broadcast)
 	    	r = RECV_WRONG_DEST ;
-	    else
+	    else{
 	    	r = RECV_OK ;
+	    }
     }else r = RECV_EMPTY ;
 
     return r;
@@ -190,10 +231,10 @@ l2addr_154 *bcastaddr (void) {
  * @return address of a new l2addr_154 object (to delete after use)
  */
 
-l2addr_154 *get_src (void)
+l2addr_154 *get_src (l2net_154 *l2)
 {
     l2addr_154 *a = (l2addr_154 *)malloc(sizeof(struct l2addr_154));
-    a->addr_ = curframe_->srcaddr ;
+    a->addr_ = l2->curframe_->srcaddr ;
     return a ;
 }
 
@@ -208,10 +249,10 @@ l2addr_154 *get_src (void)
  * @return address of a new l2addr_154 object (to delete after use)
  */
 
-l2addr_154 *get_dst (void)
+l2addr_154 *get_dst (l2net_154 *l2)
 {
     l2addr_154 *a = (l2addr_154 *)malloc(sizeof(struct l2addr_154));
-    a->addr_ = curframe_->dstaddr ;
+    a->addr_ = l2->curframe_->dstaddr ;
     return a ;
 }
 
@@ -226,9 +267,9 @@ l2addr_154 *get_dst (void)
  * @return address inside an existing buffer (do not free it)
  */
 
-uint8_t *get_payload (int offset) 
+uint8_t *get_payload (l2net_154 *l2, int offset) 
 {
-    return curframe_->payload ;
+    return l2->curframe_->payload ;
 }
 
 
@@ -243,9 +284,9 @@ uint8_t *get_payload (int offset)
  * @return original length
  */
 
-size_t get_paylen (void) 
+size_t get_paylen (l2net_154 *l2) 
 {
-    return curframe_->paylen ;
+    return l2->curframe_->paylen ;
 }
 
 
@@ -256,29 +297,29 @@ size_t get_paylen (void)
  * This methods prints a part of the received frame.
  */
 
-void dump_packet (size_t start, size_t maxlen)
+void dump_packet (l2net_154 *l2, size_t start, size_t maxlen)
 {
     size_t i, n ;
 
     n = start + maxlen ;
-    if (curframe_->rawlen < n)
-		n = curframe_->rawlen ;
+    if (l2->curframe_->rawlen < n)
+		n = l2->curframe_->rawlen ;
 
     for (i = start ; i < n ; i++)
     {
 		if (i > start)
 		    printf (' ') ;
-		printf("%x", (curframe_->rawframe [i] >> 4) & 0xf) ;
-		printf("%x", (curframe_->rawframe [i]) & 0xf) ;
+		printf("%x", (l2->curframe_->rawframe [i] >> 4) & 0xf) ;
+		printf("%x", (l2->curframe_->rawframe [i]) & 0xf) ;
     }
     printf("\n");
 }
 
 
-void setMTU(size_t mtu) {
-	mtu_ = mtu;
+void setMTU(l2net_154 *l2, size_t mtu) {
+	l2->mtu_ = mtu;
 }
 
-size_t getMTU(void) {
-	return mtu_;
+size_t getMTU(l2net_154 *l2) {
+	return l2->mtu_;
 }

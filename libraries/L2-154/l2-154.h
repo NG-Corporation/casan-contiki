@@ -13,7 +13,6 @@
 
 #include "../ConMsg/ConMsg.h"
 #include "../Casan/defs.h"
-#include "../Casan/l2.h"
 #include <stddef.h> 
 
 
@@ -24,12 +23,35 @@
 		addr2_t addr_;
 	}l2addr_154;
 
-	addr2_t myaddr_;
+	typedef enum
+	{
+	    RECV_EMPTY, 		///< No received message
+	    RECV_WRONG_TYPE,		///< Wrong Ethernet type, for example
+	    RECV_WRONG_DEST,		///< Wrong destination address
+	    RECV_TRUNCATED,		///< Truncated message
+	    RECV_OK			///< Message received successfully
+	} l2_recv_t ;
+
+
+	typedef struct l2net_154 {
+		ConReceivedFrame *curframe_;
+		addr2_t myaddr_;
+
+		/** Current MTU value
+		 *
+		 * Derived classes must initialize this value to the network
+		 * default MTU after object creation. It can be modified
+		 * afterwards by the calling program, for example to reflect
+		 * the result of an MTU negociation.
+		 * Maximum payload length is derived from this value.
+		 */
+		size_t mtu_ ;		// must be initialized in derived classes
+	}l2net_154;
 
 
 	extern l2addr_154 *l2addr_154_broadcast;
 
-	void freel2_154(l2addr_154 *addr);
+	void freel2addr_154(l2addr_154 *addr);
 
 	l2addr_154 *init_l2addr_154_char(const char*);
 
@@ -41,45 +63,36 @@
 
 	void printAddr (const l2addr_154 *x) ;
 
-	void startL2_154 (l2addr_154 *myaddr, channel_t chan, panid_t panid) ;
+	//void startL2_154 (l2net_154 *l2, l2addr_154 *myaddr, channel_t chan, panid_t panid) ;
 
-	size_t maxpayload (void) ;
+	l2net_154* startL2_154 ( l2addr_154 *a, channel_t chan, panid_t panid);
 
-	bool send (l2addr_154 *dest, const uint8_t *data, size_t len) ;
+	size_t maxpayload (l2net_154 *l2) ;
+
+	bool send (l2net_154 *l2, l2addr_154 *dest, const uint8_t *data, size_t len) ;
 
 	void setBroadcastAddr(void);
 
-	void setMTU(size_t mtu);
+	void setMTU(l2net_154 *l2, size_t mtu);
 
-	size_t getMTU(void);
+	size_t getMTU(l2net_154 *l2);
 
 	// the "recv" method copy the received packet in
 	// the instance private variable (see rbuf_/rbuflen_ below)
-	l2_recv_t recv (void) ;
+	l2_recv_t recv (l2net_154 *l2) ;
 
 	l2addr_154 *bcastaddr (void) ;	// return a static variable
-	l2addr_154 *get_src (void) ;	// get a new l2addr_154
-	l2addr_154 *get_dst (void) ;	// get a new l2addr_154
+	l2addr_154 *get_src (l2net_154 *l2) ;	// get a new l2addr_154
+	l2addr_154 *get_dst (l2net_154 *l2) ;	// get a new l2addr_154
 
 	// Payload (not including MAC header, of course)
-	uint8_t *get_payload (int offset) ;
-	size_t get_paylen (void) ;	// if truncated pkt: truncated payload
+	uint8_t *get_payload (l2net_154 *l2,int offset) ;
+	size_t get_paylen (l2net_154 *l2) ;	// if truncated pkt: truncated payload
 
 	// debug usage
-	void dump_packet (size_t start, size_t maxlen) ;
+	void dump_packet (l2net_154 *l2, size_t start, size_t maxlen) ;
 
-
-	ConReceivedFrame *curframe_;
-
-	/** Current MTU value
-	 *
-	 * Derived classes must initialize this value to the network
-	 * default MTU after object creation. It can be modified
-	 * afterwards by the calling program, for example to reflect
-	 * the result of an MTU negociation.
-	 * Maximum payload length is derived from this value.
-	 */
-	size_t mtu_ ;		// must be initialized in derived classes
+	
 
 #endif
 

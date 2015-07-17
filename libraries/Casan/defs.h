@@ -43,4 +43,14 @@
 // Maximum token length
 #define	COAP_MAX_TOKLEN		8
 
+
+// CoAP ACK timeout (milliseconds) for CONfirmable messages
+#define	ACK_TIMEOUT	2000
+// CoAP ACK random factor to compute initial timeout for CON messages
+#define	ACK_RANDOM_FACTOR	1.5
+ // CoAP maximum number of retransmissions
+#define MAX_RETRANSMIT	4
+
+#define ALEA(x) x
+
 #endif

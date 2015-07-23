@@ -44,6 +44,8 @@ void freeMsg(Msg *m){
 
 Msg *initMsg(l2net_154 *l2) {
 	Msg *m = (Msg *)malloc (sizeof( Msg));
+	if (m == NULL)
+		printf("Memory allocation failed\n");
 
 	m->l2_ = l2;
 	m->paylen_ = 0;
@@ -67,6 +69,8 @@ Msg *initMsg(l2net_154 *l2) {
 Msg *initMsgMsg (const Msg *m2) 
 {
 	Msg *m = (Msg *)malloc (sizeof(struct msg));
+	if (m == NULL)
+		printf("Memory allocation failed\n");
     msgcopy (m, m2) ;
     return m;
 }
@@ -609,6 +613,8 @@ void push_option (Msg *m, option *o)
     optlist *newo, *prev, *cur ;
 
     newo = (optlist *) malloc (sizeof (struct optlist));
+    if (newo == NULL)
+		printf("Memory allocation failed\n");
     newo->o = initOptionOption(o);
 
     prev = NULL ;
@@ -711,6 +717,8 @@ void msgcopy (Msg *m1, const Msg *m2) {
 		free(m1 -> payload_);
 
 	m1->payload_ = (uint8_t *) malloc (m1->paylen_) ;
+	if (m1->payload_ == NULL)
+		printf("Memory allocation failed\n");
 	memcpy (m1->payload_, m2->payload_, m1->paylen_);
 
 	m1->enclen_ = 0;
@@ -726,6 +734,8 @@ void msgcopy (Msg *m1, const Msg *m2) {
 	for (ol2 = m2->optlist_; ol2 != NULL ; ol2 = ol2->next) {
 		optlist *newo;
 		newo = (optlist *) malloc (sizeof (struct optlist));
+		if (newo == NULL)
+			printf("Memory allocation failed\n");
 		newo->o = initOptionOption(ol2->o);
 		newo->next = NULL;
 		if (ol1 == NULL)

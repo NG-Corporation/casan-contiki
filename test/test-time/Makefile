@@ -1,6 +1,4 @@
 CONTIKI = ../../../../..
-CASAN = ../..
-PROJECT_SOURCEFILES += $(CASAN)/libraries/Casan/time.c
 TARGET = iotlab-m3
 
 

@@ -80,7 +80,7 @@ static optdesc optdesc_ [] =
  * Utilities
  */
 
-byte *uint_to_byte (uint val, int *len) {
+byte uint_to_byte (uint val, int *len) {
 
     byte stbin [sizeof (uint)] ;
     int shft ;
@@ -95,7 +95,7 @@ byte *uint_to_byte (uint val, int *len) {
         if (len != 0 || b != 0)
             stbin [*len++] = b ;
     }
-    return stbin ;
+    return *stbin ;
 }
 
 
@@ -115,6 +115,8 @@ void freeOption( option *op) {
 option *initOption ()
 {
     option *op = (option *)malloc (sizeof(struct option));
+    if (op == NULL)
+        printf("Memory allocation failed\n");
     op->optlen_ = 0;
     RESET(op) ;
     return op;
@@ -131,6 +133,8 @@ option *initOption ()
 
 option *initOptionEmpty (optcode_t optcode) {
     option *op = (option *) malloc (sizeof(struct option));
+    if (op == NULL)
+        printf("Memory allocation failed\n");
     op->optlen_ = 0;
     bool err = false ;
     CHK_OPTCODE (optcode, err) ;
@@ -158,6 +162,8 @@ option *initOptionEmpty (optcode_t optcode) {
  option *initOptionOpaque(optcode_t optcode, const void *optval, int optlen) {
     
     option *op = (option *)malloc (sizeof(struct option));
+    if (op == NULL)
+        printf("Memory allocation failed\n");
     bool err = false ;
     CHK_OPTCODE (optcode, err) ;
     if (err) {
@@ -191,8 +197,10 @@ option *initOptionEmpty (optcode_t optcode) {
 option *initOptionInteger (optcode_t optcode, uint optval)
 {
     option *op = (option *)malloc (sizeof(struct option));
+    if (op == NULL)
+        printf("Memory allocation failed\n");
     bool err ;
-    byte *stbin ; 
+    byte stbin ; 
     int len;
 
     stbin = uint_to_byte (optval, &len) ;
@@ -385,7 +393,7 @@ void setOptvalOpaque (option *o, void *val, int len)
 void setOptvalInteger (option *o, uint val)
 {
     bool err ;
-    byte *stbin ;
+    byte stbin ;
     int len ;
 
     stbin = uint_to_byte (val, &len) ;

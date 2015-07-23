@@ -23,6 +23,8 @@ void freeToken(token *to) {
 token *initToken(void)
 {
     token *to = (token *) malloc (sizeof (struct Token));
+    if (to == NULL)
+        printf("Memory allocation failed\n");
     to->toklen_ = 0 ;
     return to;
 }
@@ -35,6 +37,8 @@ token *initToken(void)
 
 token *initTokenChar(char *str) {
  	token *to = (token *) malloc (sizeof (struct Token));
+    if (to == NULL)
+        printf("Memory allocation failed\n");
     to->toklen_ = 0 ;
  	int i =0;
 
@@ -61,6 +65,8 @@ token *initTokenChar(char *str) {
 
 token *initTokenToken(uint8_t *val, size_t len) {
  	token *to = (token *) malloc (sizeof (struct Token));
+    if (to == NULL)
+        printf("Memory allocation failed\n");
  	if (len > 0 && len < NTAB (to->token_)) {
  		to->toklen_ = len;
  		memcpy( to->token_, val, len);

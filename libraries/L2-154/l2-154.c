@@ -32,6 +32,8 @@ void freel2addr_154(l2addr_154 *addr) {
 l2addr_154 *init_l2addr_154_char(const char *a)
 {
 	l2addr_154 *addr = (l2addr_154 *)malloc(sizeof(struct l2addr_154));
+	if (addr == NULL)
+		printf("Memory allocation failed\n");
     int i = 0 ;
     uint8_t b = 0 ;
     uint8_t buf [I154_ADDRLEN] ;
@@ -73,7 +75,6 @@ l2addr_154 *init_l2addr_154_char(const char *a)
 
 
 void setBroasdcastAddr(void) {
-	l2addr_154_broadcast = (l2addr_154 *)malloc(sizeof(struct l2addr_154));
 	l2addr_154_broadcast = init_l2addr_154_char("ff:ff");	
 }
 
@@ -83,6 +84,8 @@ void setBroasdcastAddr(void) {
 
 l2addr_154 *init_l2addr_154_addr(const l2addr_154 *x){
 	l2addr_154 *addr =(l2addr_154 *)malloc(sizeof(struct l2addr_154));
+	if (addr == NULL)
+		printf("Memory allocation failed\n");
 	addr -> addr_ = x->addr_ ;
 	return addr;
 }
@@ -137,9 +140,13 @@ void printAddr_2 (const addr2_t x)  {
 
 l2net_154* startL2_154 ( l2addr_154 *a, channel_t chan, panid_t panid) {
 	l2net_154 *l2 = (l2net_154 *) malloc (sizeof(l2net_154));
+	if (l2 == NULL)
+		printf("Memory allocation failed\n");
 	l2->myaddr_ = a ->addr_;
 
 	conmsg = (ConMsg * ) malloc (sizeof(ConMsg));
+	if (conmsg == NULL)
+		printf("Memory allocation failed\n");
     setAddr2 ( l2->myaddr_) ;
     setChannel ( chan) ;
     setPanid ( panid) ;
@@ -234,6 +241,8 @@ l2addr_154 *bcastaddr (void) {
 l2addr_154 *get_src (l2net_154 *l2)
 {
     l2addr_154 *a = (l2addr_154 *)malloc(sizeof(struct l2addr_154));
+    if (a == NULL)
+		printf("Memory allocation failed\n");
     a->addr_ = l2->curframe_->srcaddr ;
     return a ;
 }
@@ -252,6 +261,8 @@ l2addr_154 *get_src (l2net_154 *l2)
 l2addr_154 *get_dst (l2net_154 *l2)
 {
     l2addr_154 *a = (l2addr_154 *)malloc(sizeof(struct l2addr_154));
+    if (a == NULL)
+		printf("Memory allocation failed\n");
     a->addr_ = l2->curframe_->dstaddr ;
     return a ;
 }

@@ -9,6 +9,8 @@ void freeRetrans(Retrans *rt) {
 Retrans *initRetrans (void) 
 {
 	Retrans *rt = (Retrans *) malloc (sizeof(Retrans));
+	if (rt == NULL)
+		printf("Memory allocation failed\n");
     rt->retransq_ = NULL ;
     return rt;
 }
@@ -35,6 +37,8 @@ void addRetrans (Retrans *rt, Msg *msg)
     sync_time (&curtime) ;		// synchronize curtime
 
     n = (retransq *) malloc (sizeof (retransq)) ;
+    if (n == NULL)
+		printf("Memory allocation failed\n");
     n->msg = msg ;
     n->timelast = curtime ;
     n->timenext = curtime + ALEA (ACK_TIMEOUT * ACK_RANDOM_FACTOR) ;

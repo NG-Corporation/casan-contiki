@@ -110,7 +110,7 @@
 	} optdesc;
 	static optdesc optdesc_ [] ;
 
-	byte *uint_to_byte (uint val, int *len) ;
+	byte uint_to_byte (uint val, int *len) ;
 
 	void freeOption( option *op);
 

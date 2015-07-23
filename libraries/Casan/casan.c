@@ -52,6 +52,8 @@ Constructor and simili-destructor
 Casan *initCasan (l2net_154 *l2, int mtu, long int slaveid)
 {
     Casan *ca = (Casan *) malloc(sizeof (Casan));
+    if (ca == NULL)
+		printf("Memory allocation failed\n");
     ca->l2_ = l2 ;
     ca->slaveid_ = slaveid ;
     curtime = 0 ;			// global variable
@@ -253,6 +255,8 @@ void register_resource (Casan *ca, Resource *res)
      */
 
     newr = (reslist *) malloc(sizeof (reslist)) ;
+    if (newr == NULL)
+		printf("Memory allocation failed\n");
     newr->res = res ;
 
     prev = NULL ;

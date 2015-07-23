@@ -87,7 +87,7 @@ void it_tx_done ()
 
 
 void init() {
-	conmsg->chan_ = 17;
+	conmsg->chan_ = 13;
 	conmsg->writing_ = false;
 }
 
@@ -102,6 +102,8 @@ void start() {
 	}
 	
     conmsg->rbuffer_ = (ConBuf *)malloc(sizeof(struct ConBuf)*conmsg->msgbufsize_) ;
+    if (conmsg->rbuffer_ == NULL)
+    	printf("Memory allocation failed\n");
 
     conmsg->rbuffirst_ = 0 ;
     conmsg->rbuflast_ = 0 ;
@@ -109,6 +111,7 @@ void start() {
     conmsg->writing_ = false;
     conmsg->seqnum_ = 0;
 
+    setChannelRadio(conmsg->chan_);
     NETSTACK_RADIO.init();
     initBuf((uint8_t *) conmsg->rbuffer_ [conmsg->rbuflast_].frame, MAX_PAYLOAD);
     NETSTACK_RADIO.on();

@@ -22,6 +22,8 @@ Resource *initResource (const char *name, const char *title, const char *rt)
 {
     int i;
 	Resource *rs = (Resource *) malloc (sizeof (Resource));
+    if (rs == NULL)
+        printf("Memory allocation failed\n");
     ALLOC_COPY (rs->name_, name) ;
     ALLOC_COPY (rs->title_, title) ;
     ALLOC_COPY (rs->rt_, rt) ;

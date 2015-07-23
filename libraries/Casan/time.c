@@ -72,6 +72,8 @@ void print_time (time_t *t)
 Twait *initTwait (time_t *cur)
 {
 	Twait *tw = (Twait *) malloc(sizeof(Twait));
+    if (tw == NULL)
+        printf("Memory allocation failed\n");
     tw->limit_ = *cur + TIMER_WAIT_MAX ;
     tw->inc_ = TIMER_WAIT_START ;
     tw->next_ = *cur + tw->inc_ ;
@@ -114,6 +116,8 @@ bool expiredTwait (Twait *tw, time_t *cur)
 Trenew *initTrenew ( time_t *cur, time_t sttl)
 {
 	Trenew *tr = (Trenew *) malloc (sizeof(Trenew));
+    if (tr == NULL)
+        printf("Memory allocation failed\n");
     tr->inc_ = sttl / 2 ;
 
     tr->next_ = *cur + tr->inc_ ;

@@ -161,6 +161,6 @@ void printResource (Resource *rs)
 {
     printf ("RES name = %s", rs->name_) ;
     printf (", title = %s",rs->title_) ;
-    printf (", rt = %d", rs->rt_) ;
+    printf (", rt = %s", rs->rt_) ;
     printf("\n");
 }

@@ -515,7 +515,7 @@ void loop (Casan *ca)
     Msg *out = initMsg(ca->l2_) ;
     l2_recv_t ret ;
     uint8_t oldstatus ;
-    long int hlid ;
+    long int hlid = 0;
     l2addr_154 *srcaddr ;
     int mtu ;				// mtu announced by master in assoc msg
 
@@ -771,7 +771,7 @@ bool is_hello (Msg *m, long int *hlid)
 		    if (getOptcode (o) == MO_Uri_Query)
 		    {
 				// we benefit from the added nul byte at the end of val
-				if (sscanf ((const char *) getOptval (o, (int *) 0), CASAN_HELLO, &hlid) == 1)
+				if (sscanf ((const char *) getOptval (o, (int *) 0), CASAN_HELLO, hlid) == 1)
 				    found = true ;
 		    }
 		}
